@@ -1,23 +1,23 @@
-contractTimer = function() {
+sessionTimer = function() {
 				
-		var lockDuration,		// duration before contract locks on the server side			
+		var sessionDuration,	// duration before session locks on the server side			
 			warningDuration,	// duration the warning should be displayed to user
 			warningTimeout,		// duration of time to wait before checking on activity
 			activityTimeout,	// duration of time for measuring no activity by user
 			noUserActivity,		// boolean representing if there has been any activity by user
 			activityTimer,		// setTimeout object that tracks when to update user activity variable
 			warningTimer,		// setTimeout object that tracks next time to display warning
-			unlockTimer;		// setTimeout object that tracks the duration of the warning before it finally unlocks contract
+			endSessionTimer;	// setTimeout object that tracks the duration of the warning before it finally ends session
 		
 		
 		/**
 		 *	Calculate timer settings and initialize timers
 		 */
 		function init(lockTime, warnTime) {
-			lockDuration = lockTime;
+			sessionDuration = lockTime;
 			warningDuration = warnTime;
 			noUserActivity = false;
-			warningTimeout = lockDuration - warningDuration;
+			warningTimeout = sessionDuration - warningDuration;
 			activityTimeout = warningTimeout - 10;
 			
 			activityTimer = setTimeout(userActivityTimeout, activityTimeout);
@@ -49,59 +49,59 @@ contractTimer = function() {
 		};
 		
 		/**
-		 *	Resets the warning timer and reset the contract lock on server
+		 *	Resets the warning timer and resets the session on server
 		 */
 		function resetWarningTimer() {
 			clearTimeout(warningTimer);
 			warningTimer = setTimeout(checkUserActivity, warningTimeout);
-			resetContract();
+			resetSession();
 		};
 		
 		/**
-		 *	Display warning to user that the contract is about to unlock
+		 *	Display warning to user that the session is about to end
 		 *	Gives option to continue or end session
 		 *	If user chooses to continue then timers are reset
-		 *	If user chooses to end session contract is unlocked
-		 *	If no user input, then same as about as soon as timer runs out
+		 *	If user chooses to end, session is unlocked
+		 *	If no user input, then same as above as soon as timer runs out
 		 */
 		function warnUser() {
 			$("div").append('<div class="warning"><h2 class="continue">Continue</h2><h2 class="done">Done</h2></div>');
-			unlockTimer = setTimeout(unlockContract, warningDuration);
+			endSessionTimer = setTimeout(endSession, warningDuration);
 			
 			$("h2.continue").click(function() {
 				resetActivityTimer();
 				resetWarningTimer();
-				clearTimeout(unlockTimer);
+				clearTimeout(endSessionTimer);
 				$("div.warning").remove();
 			});
 			
 			$("h2.done").click(function() {
 				$("div.warning").remove();
-				unlockContract();
-				clearTimeout(unlockTimer);
+				endSession();
+				clearTimeout(endSessionTimer);
 			});
 		};
 		
 		/**
-		 *	Asychronous call to reset contract lock on server
+		 *	Asychronous call to reset session on server
 		 */
-		function resetContract(contactId) {
+		function resetSession(contactId) {
 			// !Testing: console log
-			console.log("reseting contract");
+			console.log("reseting session");
 		};
 		
 		/**
-		 *	Asychronous call to unlock contract on server
+		 *	Asychronous call to end session on server
 		 */
-		function unlockContract(contractId) {
+		function endSession(sessionId) {
 			$("div.warning").remove();
 			// !Testing: console log
-			console.log("unlocking contract");
+			console.log("unlocking session");
 		};
 		
 		return {
-			startTimer: function(lockDuration, warningDuration) {
-				init(lockDuration, warningDuration);
+			startTimer: function(sessionDuration, warningDuration) {
+				init(sessionDuration, warningDuration);
 			},
 			userActivityDetected: function() {
 				resetActivityTimer();
@@ -111,7 +111,7 @@ contractTimer = function() {
 
 $(document).ready(function() {
 	$("h1").click(function() {
-		contractTimer.userActivityDetected();
+		sessionTimer.userActivityDetected();
 	});
-	contractTimer.startTimer(20000, 10000);
+	sessionTimer.startTimer(20000, 10000);
 });
