@@ -1,3 +1,8 @@
+/**
+ * Session Timer is a singleton that warns the user that his/her session is about to end.
+ * It uses asynchronous calls to reset the server side session timer.
+ */
+
 sessionTimer = function() {
 				
 		var sessionDuration,	// duration before session locks on the server side			
@@ -8,14 +13,15 @@ sessionTimer = function() {
 			activityTimer,		// setTimeout object that tracks when to update user activity variable
 			warningTimer,		// setTimeout object that tracks next time to display warning
 			endSessionTimer;	// setTimeout object that tracks the duration of the warning before it finally ends session
-		
+
+/* PRIVATE METHODS */
 		
 		/**
 		 *	Calculate timer settings and initialize timers
 		 */
-		function init(lockTime, warnTime) {
-			sessionDuration = lockTime;
-			warningDuration = warnTime;
+		function init(lockTimeMinutes, warnTimeMinutes) {
+			sessionDuration = lockTimeMinutes*1000*60; // converting to miliseconds
+			warningDuration = warnTimeMinutes*1000*60; // converting to miliseconds
 			noUserActivity = false;
 			warningTimeout = sessionDuration - warningDuration;
 			activityTimeout = warningTimeout - 10;
@@ -61,22 +67,27 @@ sessionTimer = function() {
 		 *	Display warning to user that the session is about to end
 		 *	Gives option to continue or end session
 		 *	If user chooses to continue then timers are reset
-		 *	If user chooses to end, session is unlocked
-		 *	If no user input, then same as above as soon as timer runs out
+		 *	If user chooses to end, session is ended
 		 */
 		function warnUser() {
-			$("div").append('<div class="warning"><h2 class="continue">Continue</h2><h2 class="done">Done</h2></div>');
+			var warnWidth = 300;
+			var warnPosition = (jQuery(window).width()/2) - (warnWidth/2);
+			jQuery("body:first").append('<div class="warning"><div class="warningHeader">User input required</div><div class="content"><p>Your session is about to end. Would you like to continue?</p><div class="buttons"><input type="button" class="continue" value="Continue Session"/><input type="button" class="close" value="End Session"/></div></div></div>');
+			jQuery("div.warning").css({display:"block", border:"1px solid #000", width:warnWidth+"px", position:"absolute", top:"100px", left:warnPosition+"px", background:"#fff"});
+			jQuery("div.warning .warningHeader").css({color:"#fff", "font-weight":"bold", background:"#990000", margin:"0", padding:"4px 10px", "border-bottom":"1px solid #000"});
+			jQuery("div.warning .content").css({margin:"5px 10px 10px 10px"});
+			jQuery("div.warning .buttons input").css({"font-size":"11px", margin:"0 10px 0 0"});
 			endSessionTimer = setTimeout(endSession, warningDuration);
 			
-			$("h2.continue").click(function() {
+			jQuery(".continue").click(function() {
 				resetActivityTimer();
 				resetWarningTimer();
 				clearTimeout(endSessionTimer);
-				$("div.warning").remove();
+				jQuery("div.warning").remove();
 			});
 			
-			$("h2.done").click(function() {
-				$("div.warning").remove();
+			jQuery(".close").click(function() {
+				jQuery("div.warning").remove();
 				endSession();
 				clearTimeout(endSessionTimer);
 			});
@@ -94,10 +105,11 @@ sessionTimer = function() {
 		 *	Asychronous call to end session on server
 		 */
 		function endSession(sessionId) {
-			$("div.warning").remove();
 			// !Testing: console log
-			console.log("unlocking session");
+			console.log("ending session");
 		};
+		
+/* PUBLIC METHODS */
 		
 		return {
 			startTimer: function(sessionDuration, warningDuration) {
@@ -113,5 +125,5 @@ $(document).ready(function() {
 	$("h1").click(function() {
 		sessionTimer.userActivityDetected();
 	});
-	sessionTimer.startTimer(20000, 10000);
+	sessionTimer.startTimer(.5, .25);
 });
